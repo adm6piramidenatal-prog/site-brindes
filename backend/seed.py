@@ -14,9 +14,9 @@ USERS_TO_CREATE = [
     },
     {
         "name": "Luismar - Gerente adm",
-        "email": "funcionario@email.com",
-        "role": "emissor",
-        "password_plain": "senha_temporaria_123"
+        "email": "financeirofive3@gmail.com",
+        "role": "admin",
+        "password_plain": "@cess0"
     },
     {
         "name": "Gabriella - Administrativo",
