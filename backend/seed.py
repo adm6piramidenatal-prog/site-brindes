@@ -36,6 +36,12 @@ USERS_TO_CREATE = [
         "role": "emissor",
         "password_plain": "recepcao123"
     },
+    {
+        "name": "Pedro Henrique",
+        "email": "mamaprego@gmail.com",
+        "role": "admin",
+        "password_plain": "senha123"
+    },
 ]
 
 async def seed() -> None:
