@@ -59,9 +59,25 @@ export interface VoucherValidation {
   created_at: string;
 }
 
+// NOVO: Interface com os dados para a tabela
+export interface VoucherHistoryItem {
+  code: string;
+  gift_title: string;
+  winner_name: string;
+  issue_date: string;
+  observation: string;
+  stay_days: number | null;
+  cost_type: string | null;
+  created_at: string;
+  emissor_nome: string;
+}
+
 export const fetchVoucherConfig = () => apiGet<VoucherConfig>("/vouchers/config");
 export const createVoucherCode = (payload: VoucherCodeCreate) => apiPost<VoucherCode>("/vouchers/codes", payload);
 export const fetchVoucherValidation = (code: string) => apiGet<VoucherValidation>(`/vouchers/codes/${encodeURIComponent(code)}`);
+
+// NOVO: Pedido seguro que leva o seu crachá de Administrador
+export const fetchVoucherHistory = () => apiGet<VoucherHistoryItem[]>("/vouchers/history");
 
 export const FALLBACK_CONFIG: VoucherConfig = {
   today: "",
