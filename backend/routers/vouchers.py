@@ -176,25 +176,23 @@ async def validate_voucher_code(code: str) -> VoucherValidation:
         cost_type=document.get("cost_type"),
         created_at=document["created_at"],
     )
-    @router.get("/history")
+
+
+@router.get("/history")
 async def get_voucher_history(user: dict = Depends(require_user)) -> list[dict]:
-    # 1. Bloqueio de segurança: Apenas administradores entram aqui
     if user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Acesso restrito a administradores."
         )
         
-    # 2. Busca os últimos 100 vouchers emitidos (ordenados do mais recente para o mais antigo)
     cursor = db.voucher_codes.find({}, {"_id": 0}).sort("created_at", -1).limit(100)
     vouchers = await cursor.to_list(length=100)
     
-    # 3. Busca a lista de utilizadores para traduzir o ID no nome real do funcionário
     users_cursor = db.users.find({}, {"_id": 0, "id": 1, "name": 1})
     users = await users_cursor.to_list(length=100)
     user_map = {u["id"]: u["name"] for u in users}
     
-    # 4. Organiza a informação para enviar direitinha para o Front-end
     for v in vouchers:
         gift = next((item for item in GIFT_OPTIONS if item.id == v.get("gift_id")), None)
         v["gift_title"] = gift.title if gift else "Brinde FIVE"
