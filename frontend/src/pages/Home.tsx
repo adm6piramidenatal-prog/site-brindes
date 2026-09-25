@@ -9,7 +9,7 @@ import VoucherPreview from "@/components/VoucherPreview";
 import { Button } from "@/components/ui/button";
 import { fetchCurrentUser } from "@/lib/auth";
 import { endSession } from "@/lib/session";
-import { createVoucherCode, FALLBACK_CONFIG, fetchVoucherConfig } from "@/lib/vouchers";
+import { createVoucherCode, FALLBACK_CONFIG, fetchVoucherConfig, fetchVoucherHistory } from "@/lib/vouchers";
 
 async function waitForPrintAssets() {
   await document.fonts.ready;
@@ -43,14 +43,10 @@ export default function Home() {
   const isAdmin = userQuery.data?.role === "admin";
   const [activeTab, setActiveTab] = useState<"generator" | "history">("generator");
 
-  // Novo: Busca dos dados do Histórico
+// Novo: Busca dos dados do Histórico (Agora 100% seguro!)
   const historyQuery = useQuery({
     queryKey: ["voucher-history"],
-    queryFn: async () => {
-      const res = await fetch("/api/vouchers/history");
-      if (!res.ok) throw new Error("Erro ao buscar histórico");
-      return res.json();
-    },
+    queryFn: fetchVoucherHistory,
     enabled: activeTab === "history" && isAdmin,
   });
 
