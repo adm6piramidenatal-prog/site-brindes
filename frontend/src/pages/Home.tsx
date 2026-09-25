@@ -100,6 +100,59 @@ export default function Home() {
     }
   };
 
+  // NOVO: Função isolada e 100% à prova de erros para gerar o PDF do relatório
+  const printHistory = () => {
+    const tableElement = document.querySelector('.history-table-container');
+    if (!tableElement) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Por favor, permita a abertura de pop-ups para gerar o PDF.");
+      return;
+    }
+
+    const now = new Date().toLocaleString('pt-BR');
+    const userName = userQuery.data?.name || 'Administrador';
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Relatório de Emissões - FIVE</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; max-width: 1000px; margin: 0 auto; }
+            .header { margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+            .kicker { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+            h1 { font-size: 24px; margin: 0 0 8px 0; }
+            .meta { color: #64748b; font-size: 14px; margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+            td { padding: 12px; font-size: 14px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+            tr:nth-child(even) { background: #f8fafc; }
+            .brinde-tag { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="kicker">Controle de Gestão</div>
+            <h1>Histórico de Emissões - FIVE</h1>
+            <p class="meta">Relatório extraído em ${now} por ${userName}</p>
+          </div>
+          ${tableElement.innerHTML}
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 250);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   useEffect(() => {
     const handleShortcut = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "p" && activeTab === "generator") {
@@ -185,31 +238,6 @@ export default function Home() {
         ) : (
           <section className="history-view" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
             
-            {/* NOVO: Contra-regra de CSS para forçar a Tabela a aparecer no PDF */}
-            <style>{`
-              @media print {
-                body * {
-                  visibility: hidden;
-                }
-                .history-view, .history-view * {
-                  visibility: visible;
-                }
-                .history-view {
-                  position: absolute;
-                  left: 0;
-                  top: 0;
-                  width: 100%;
-                  padding: 20px;
-                }
-                .no-print, .no-print * {
-                  visibility: hidden !important;
-                  display: none !important;
-                }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border-bottom: 1px solid #ddd !important; padding: 12px; text-align: left; }
-              }
-            `}</style>
-            
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <p className="section-kicker" style={{ color: '#0f172a', fontWeight: 600, fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>Controle de Gestão</p>
@@ -217,7 +245,7 @@ export default function Home() {
                 <p style={{ color: '#64748b', fontSize: '15px' }}>Consulte os últimos 100 vouchers emitidos pela equipa da FIVE.</p>
               </div>
               <button 
-                onClick={() => window.print()} 
+                onClick={printHistory} 
                 className="no-print" 
                 style={{ background: '#0f172a', color: '#ffffff', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
               >
@@ -231,7 +259,7 @@ export default function Home() {
               ) : historyQuery.isError ? (
                 <div style={{ padding: '60px', textAlign: 'center', color: '#ef4444' }}>Ocorreu um erro ao carregar o histórico. Tente atualizar a página.</div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="history-table-container" style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', textIndent: 0, borderColor: 'inherit', borderCollapse: 'collapse' }}>
                     <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                       <tr>
@@ -251,7 +279,7 @@ export default function Home() {
                           <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: 600, letterSpacing: '0.02em' }}>{v.code}</td>
                           <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.winner_name}</td>
                           <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
-                            <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{v.gift_title}</span>
+                            <span className="brinde-tag" style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{v.gift_title}</span>
                           </td>
                           <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.emissor_nome}</td>
                         </tr>
