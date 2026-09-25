@@ -23,7 +23,12 @@ USERS_TO_CREATE = [
         "email": "gabriellasantosmb@gmail.com",
         "role": "emissor",
         "password_plain": "senhatemporaria123"
-    }
+    },
+    {
+        "name": "Kadydja C.",
+        "email": "adm10fiveinter@gmail.com",
+        "role": "emissor",
+        "password_plain": "senhatemporaria123"
 ]
 
 async def seed() -> None:
