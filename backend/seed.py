@@ -22,7 +22,7 @@ USERS_TO_CREATE = [
         "name": "Gabriella S.",
         "email": "gabriellasantosmb@gmail.com",
         "role": "emissor",
-        "password_plain": "senha@cess0"
+        "password_plain": "senhatemporaria123"
     }
 ]
 
