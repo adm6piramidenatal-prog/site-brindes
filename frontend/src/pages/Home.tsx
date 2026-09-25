@@ -48,6 +48,15 @@ export default function Home() {
     enabled: activeTab === "history" && isAdmin,
   });
 
+  // NOVO: Cálculo inteligente que soma quantos brindes de cada tipo existem na tabela
+  const giftCounts = useMemo(() => {
+    if (!historyQuery.data) return {};
+    return historyQuery.data.reduce((acc: Record<string, number>, curr: any) => {
+      acc[curr.gift_title] = (acc[curr.gift_title] || 0) + 1;
+      return acc;
+    }, {});
+  }, [historyQuery.data]);
+
   const selectedGift = config.gift_options.find((gift) => gift.id === selectedGiftId) ?? config.gift_options[0];
   const codeMutation = useMutation({ mutationFn: createVoucherCode });
 
@@ -100,10 +109,10 @@ export default function Home() {
     }
   };
 
-  // NOVO: Função isolada e 100% à prova de erros para gerar o PDF do relatório
   const printHistory = () => {
-    const tableElement = document.querySelector('.history-table-container');
-    if (!tableElement) return;
+    // Agora capturamos o "history-content" inteiro (inclui as contagens e a tabela)
+    const contentElement = document.querySelector('.history-content');
+    if (!contentElement) return;
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -125,11 +134,14 @@ export default function Home() {
             .kicker { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
             h1 { font-size: 24px; margin: 0 0 8px 0; }
             .meta { color: #64748b; font-size: 14px; margin: 0; }
+            
+            /* Ajustes para os cartões e tabela no PDF */
+            .summary-cards-container { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+            .summary-card { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; box-shadow: none !important; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
             td { padding: 12px; font-size: 14px; border-bottom: 1px solid #e2e8f0; color: #334155; }
             tr:nth-child(even) { background: #f8fafc; }
-            .brinde-tag { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
           </style>
         </head>
         <body>
@@ -138,7 +150,7 @@ export default function Home() {
             <h1>Histórico de Emissões - FIVE</h1>
             <p class="meta">Relatório extraído em ${now} por ${userName}</p>
           </div>
-          ${tableElement.innerHTML}
+          ${contentElement.innerHTML}
           <script>
             window.onload = () => {
               setTimeout(() => {
@@ -253,46 +265,62 @@ export default function Home() {
               </button>
             </div>
 
-            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-              {historyQuery.isLoading ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>Carregando dados do servidor...</div>
-              ) : historyQuery.isError ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: '#ef4444' }}>Ocorreu um erro ao carregar o histórico. Tente atualizar a página.</div>
-              ) : (
-                <div className="history-table-container" style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', textIndent: 0, borderColor: 'inherit', borderCollapse: 'collapse' }}>
-                    <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                      <tr>
-                        <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Data e Hora</th>
-                        <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Código</th>
-                        <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Cliente</th>
-                        <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Brinde Emitido</th>
-                        <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Emissor</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historyQuery.data?.map((v: any, idx: number) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
-                            {new Date(v.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                          </td>
-                          <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: 600, letterSpacing: '0.02em' }}>{v.code}</td>
-                          <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.winner_name}</td>
-                          <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
-                            <span className="brinde-tag" style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{v.gift_title}</span>
-                          </td>
-                          <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.emissor_nome}</td>
-                        </tr>
-                      ))}
-                      {historyQuery.data?.length === 0 && (
-                        <tr>
-                          <td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Nenhum brinde foi emitido até o momento. Faça o seu primeiro teste!</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+            {/* Este contentor guarda os cartões e a tabela para irem juntos para o PDF */}
+            <div className="history-content">
+              
+              {/* NOVO: Cartões de Resumo */}
+              {!historyQuery.isLoading && !historyQuery.isError && historyQuery.data && historyQuery.data.length > 0 && (
+                <div className="summary-cards-container" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                  {Object.entries(giftCounts).map(([title, count]) => (
+                    <div key={title} className="summary-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', flex: '1', minWidth: '180px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</p>
+                      <p style={{ margin: '8px 0 0 0', fontSize: '32px', fontWeight: 'bold', color: '#0f172a' }}>{String(count)}</p>
+                    </div>
+                  ))}
                 </div>
               )}
+
+              <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                {historyQuery.isLoading ? (
+                  <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>Carregando dados do servidor...</div>
+                ) : historyQuery.isError ? (
+                  <div style={{ padding: '60px', textAlign: 'center', color: '#ef4444' }}>Ocorreu um erro ao carregar o histórico. Tente atualizar a página.</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', textIndent: 0, borderColor: 'inherit', borderCollapse: 'collapse' }}>
+                      <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                        <tr>
+                          <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Data e Hora</th>
+                          <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Código</th>
+                          <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Cliente</th>
+                          <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Brinde Emitido</th>
+                          <th style={{ padding: '16px', textAlign: 'left', fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Emissor</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historyQuery.data?.map((v: any, idx: number) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
+                              {new Date(v.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                            </td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: 600, letterSpacing: '0.02em' }}>{v.code}</td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.winner_name}</td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
+                              <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{v.gift_title}</span>
+                            </td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.emissor_nome}</td>
+                          </tr>
+                        ))}
+                        {historyQuery.data?.length === 0 && (
+                          <tr>
+                            <td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Nenhum brinde foi emitido até o momento. Faça o seu primeiro teste!</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}
