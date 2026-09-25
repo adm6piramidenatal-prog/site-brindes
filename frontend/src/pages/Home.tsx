@@ -39,11 +39,9 @@ export default function Home() {
   const [voucherCode, setVoucherCode] = useState("");
   const [mobileView, setMobileView] = useState<"form" | "preview">("form");
 
-  // Novo: Controlo de abas para o Administrador
   const isAdmin = userQuery.data?.role === "admin";
   const [activeTab, setActiveTab] = useState<"generator" | "history">("generator");
 
-// Novo: Busca dos dados do Histórico (Agora 100% seguro!)
   const historyQuery = useQuery({
     queryKey: ["voucher-history"],
     queryFn: fetchVoucherHistory,
@@ -125,7 +123,6 @@ export default function Home() {
         <div className="brand-lockup" data-testid="brand-lockup"><img src="/brand/five-logo.webp" alt="Símbolo da FIVE" data-testid="header-brand-logo" /><div><strong>FIVE</strong><small>Intermediadora de Vendas</small></div></div>
         
         <div className="user-actions" data-testid="user-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Seletor exclusivo para Administrador */}
           {isAdmin && (
             <div style={{ display: 'flex', gap: '6px', background: '#f1f5f9', padding: '5px', borderRadius: '8px' }}>
               <button type="button" onClick={() => setActiveTab("generator")} style={{ padding: '6px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: activeTab === "generator" ? 600 : 500, background: activeTab === "generator" ? '#fff' : 'transparent', color: activeTab === "generator" ? '#0f172a' : '#64748b', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: activeTab === "generator" ? '0 1px 2px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s' }}><Ticket size={16} /> Emitir</button>
@@ -186,11 +183,20 @@ export default function Home() {
             </div>
           </>
         ) : (
-          <section className="history-view no-print" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-            <div style={{ marginBottom: '24px' }}>
-              <p className="section-kicker" style={{ color: '#0f172a', fontWeight: 600, fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>Controle de Gestão</p>
-              <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>Histórico de Emissões</h1>
-              <p style={{ color: '#64748b', fontSize: '15px' }}>Consulte os últimos 100 vouchers emitidos pela equipa da FIVE.</p>
+          <section className="history-view" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <p className="section-kicker" style={{ color: '#0f172a', fontWeight: 600, fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>Controle de Gestão</p>
+                <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>Histórico de Emissões</h1>
+                <p style={{ color: '#64748b', fontSize: '15px' }}>Consulte os últimos 100 vouchers emitidos pela equipa da FIVE.</p>
+              </div>
+              <button 
+                onClick={() => window.print()} 
+                className="no-print" 
+                style={{ background: '#0f172a', color: '#ffffff', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+              >
+                <Printer size={18} color="#ffffff" /> Salvar como PDF
+              </button>
             </div>
 
             <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
