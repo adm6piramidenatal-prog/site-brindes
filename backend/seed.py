@@ -11,15 +11,20 @@ USERS_TO_CREATE = [
         "name": "Eduardo Araújo",
         "email": "adm6piramidenatal@gmail.com",
         "role": "admin",
-        "password_plain": "SuaSenhaForte123" # <-- MUDE ESTA SENHA
+        "password_plain": "091427"
     },
     {
-        "name": "Nome do Funcionário",
+        "name": "Luismar",
         "email": "funcionario@email.com",
         "role": "emissor",
-        "password_plain": "senha_temporaria_123" # <-- MUDE A SENHA DELE
+        "password_plain": "senha_temporaria_123"
+    },
+    {
+        "name": "Gabriella S.",
+        "email": "gabriellasantosmb@gmail.com",
+        "role": "emissor",
+        "password_plain": "senha@cess0"
     }
-    # Para adicionar mais pessoas, basta copiar um bloco inteiro desde a { até à }, e colocar aqui
 ]
 
 
