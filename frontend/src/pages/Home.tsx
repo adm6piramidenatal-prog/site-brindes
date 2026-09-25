@@ -184,6 +184,32 @@ export default function Home() {
           </>
         ) : (
           <section className="history-view" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+            
+            {/* NOVO: Contra-regra de CSS para forçar a Tabela a aparecer no PDF */}
+            <style>{`
+              @media print {
+                body * {
+                  visibility: hidden;
+                }
+                .history-view, .history-view * {
+                  visibility: visible;
+                }
+                .history-view {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100%;
+                  padding: 20px;
+                }
+                .no-print, .no-print * {
+                  visibility: hidden !important;
+                  display: none !important;
+                }
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border-bottom: 1px solid #ddd !important; padding: 12px; text-align: left; }
+              }
+            `}</style>
+            
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <p className="section-kicker" style={{ color: '#0f172a', fontWeight: 600, fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>Controle de Gestão</p>
