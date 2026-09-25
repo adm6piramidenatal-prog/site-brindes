@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Navigate } from "react-router-dom";
-import { Eye, FileCheck2, Gift, LayoutTemplate, LogOut, Printer, History, Ticket } from "lucide-react";
+import { Eye, FileCheck2, Gift, LayoutTemplate, LogOut, Printer, History, Ticket, Filter } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 import GiftFormPanel from "@/components/GiftFormPanel";
@@ -26,6 +26,8 @@ async function waitForPrintAssets() {
   if (images.some((image) => image.naturalWidth === 0)) throw new Error("Voucher background failed to load");
 }
 
+type DateFilter = "all" | "today" | "week" | "month";
+
 export default function Home() {
   const userQuery = useQuery({ queryKey: ["auth", "me"], queryFn: fetchCurrentUser, retry: false });
   const configQuery = useQuery({ queryKey: ["voucher-config"], queryFn: fetchVoucherConfig, retry: false });
@@ -41,6 +43,9 @@ export default function Home() {
 
   const isAdmin = userQuery.data?.role === "admin";
   const [activeTab, setActiveTab] = useState<"generator" | "history">("generator");
+  
+  // NOVO: Estado para controlar o período selecionado
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
 
   const historyQuery = useQuery({
     queryKey: ["voucher-history"],
@@ -48,14 +53,40 @@ export default function Home() {
     enabled: activeTab === "history" && isAdmin,
   });
 
-  // NOVO: Cálculo inteligente que soma quantos brindes de cada tipo existem na tabela
+  // NOVO: Função inteligente que filtra os dados com base no período escolhido
+  const filteredHistory = useMemo(() => {
+    if (!historyQuery.data) return [];
+    const now = new Date();
+    
+    return historyQuery.data.filter((v: Record<string, unknown>) => {
+      if (dateFilter === "all") return true;
+      
+      const itemDate = new Date(String(v.created_at));
+      
+      if (dateFilter === "today") {
+        return itemDate.toDateString() === now.toDateString();
+      }
+      if (dateFilter === "week") {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        return itemDate >= sevenDaysAgo;
+      }
+      if (dateFilter === "month") {
+        return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+  }, [historyQuery.data, dateFilter]);
+
+  // Modificado: Agora os cartões contam apenas os itens filtrados!
   const giftCounts = useMemo(() => {
-    if (!historyQuery.data) return {};
-    return historyQuery.data.reduce((acc: Record<string, number>, curr: any) => {
-      acc[curr.gift_title] = (acc[curr.gift_title] || 0) + 1;
-      return acc;
-    }, {});
-  }, [historyQuery.data]);
+    const counts: Record<string, number> = {};
+    filteredHistory.forEach((curr: Record<string, unknown>) => {
+      const title = String(curr.gift_title || "Outros");
+      counts[title] = (counts[title] || 0) + 1;
+    });
+    return counts;
+  }, [filteredHistory]);
 
   const selectedGift = config.gift_options.find((gift) => gift.id === selectedGiftId) ?? config.gift_options[0];
   const codeMutation = useMutation({ mutationFn: createVoucherCode });
@@ -110,7 +141,6 @@ export default function Home() {
   };
 
   const printHistory = () => {
-    // Agora capturamos o "history-content" inteiro (inclui as contagens e a tabela)
     const contentElement = document.querySelector('.history-content');
     if (!contentElement) return;
 
@@ -122,6 +152,11 @@ export default function Home() {
 
     const now = new Date().toLocaleString('pt-BR');
     const userName = userQuery.data?.name || 'Administrador';
+    
+    // Texto do período para aparecer no PDF
+    const periodText = dateFilter === "today" ? "Hoje" : 
+                       dateFilter === "week" ? "Últimos 7 dias" : 
+                       dateFilter === "month" ? "Este mês" : "Todos os registos";
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -135,9 +170,11 @@ export default function Home() {
             h1 { font-size: 24px; margin: 0 0 8px 0; }
             .meta { color: #64748b; font-size: 14px; margin: 0; }
             
-            /* Ajustes para os cartões e tabela no PDF */
             .summary-cards-container { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
-            .summary-card { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; box-shadow: none !important; }
+            .summary-card { border: 1px solid #e2e8f0 !important; border-radius: 8px !important; padding: 20px; min-width: 150px; }
+            .summary-card p:first-child { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; margin: 0; }
+            .summary-card p:last-child { font-size: 28px; font-weight: bold; margin: 5px 0 0 0; color: #0f172a; }
+            
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
             th { background: #f8fafc; padding: 12px; text-align: left; font-size: 13px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
             td { padding: 12px; font-size: 14px; border-bottom: 1px solid #e2e8f0; color: #334155; }
@@ -146,7 +183,7 @@ export default function Home() {
         </head>
         <body>
           <div class="header">
-            <div class="kicker">Controle de Gestão</div>
+            <div class="kicker">Controle de Gestão - ${periodText}</div>
             <h1>Histórico de Emissões - FIVE</h1>
             <p class="meta">Relatório extraído em ${now} por ${userName}</p>
           </div>
@@ -254,22 +291,38 @@ export default function Home() {
               <div>
                 <p className="section-kicker" style={{ color: '#0f172a', fontWeight: 600, fontSize: '13px', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '8px' }}>Controle de Gestão</p>
                 <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#0f172a', marginBottom: '8px' }}>Histórico de Emissões</h1>
-                <p style={{ color: '#64748b', fontSize: '15px' }}>Consulte os últimos 100 vouchers emitidos pela equipa da FIVE.</p>
+                <p style={{ color: '#64748b', fontSize: '15px' }}>Consulte os vouchers emitidos pela equipa da FIVE.</p>
               </div>
-              <button 
-                onClick={printHistory} 
-                className="no-print" 
-                style={{ background: '#0f172a', color: '#ffffff', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-              >
-                <Printer size={18} color="#ffffff" /> Salvar como PDF
-              </button>
+              
+              <div style={{ display: 'flex', gap: '12px' }} className="no-print">
+                {/* NOVO: Caixa de seleção do período */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '0 12px', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                  <Filter size={16} color="#64748b" />
+                  <select 
+                    value={dateFilter} 
+                    onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                    style={{ padding: '10px 0', border: 'none', background: 'transparent', color: '#0f172a', fontWeight: 500, fontSize: '14px', outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="all">Últimos registos</option>
+                    <option value="today">Apenas Hoje</option>
+                    <option value="week">Últimos 7 dias</option>
+                    <option value="month">Este Mês</option>
+                  </select>
+                </div>
+
+                <button 
+                  onClick={printHistory} 
+                  style={{ background: '#0f172a', color: '#ffffff', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 500, fontSize: '14px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                >
+                  <Printer size={18} color="#ffffff" /> Salvar PDF
+                </button>
+              </div>
             </div>
 
-            {/* Este contentor guarda os cartões e a tabela para irem juntos para o PDF */}
             <div className="history-content">
               
-              {/* NOVO: Cartões de Resumo */}
-              {!historyQuery.isLoading && !historyQuery.isError && historyQuery.data && historyQuery.data.length > 0 && (
+              {/* Cartões de Resumo (Agora baseados no filtro) */}
+              {!historyQuery.isLoading && !historyQuery.isError && filteredHistory.length > 0 && (
                 <div className="summary-cards-container" style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
                   {Object.entries(giftCounts).map(([title, count]) => (
                     <div key={title} className="summary-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', flex: '1', minWidth: '180px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
@@ -298,22 +351,24 @@ export default function Home() {
                         </tr>
                       </thead>
                       <tbody>
-                        {historyQuery.data?.map((v: any, idx: number) => (
+                        {/* A tabela agora mostra apenas os resultados filtrados */}
+                        {filteredHistory.map((v: Record<string, unknown>, idx: number) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                             <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
-                              {new Date(v.created_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                              {new Date(String(v.created_at)).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                             </td>
-                            <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: 600, letterSpacing: '0.02em' }}>{v.code}</td>
-                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.winner_name}</td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#0f172a', fontWeight: 600, letterSpacing: '0.02em' }}>{String(v.code)}</td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{String(v.winner_name)}</td>
                             <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>
-                              <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{v.gift_title}</span>
+                              <span style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{String(v.gift_title)}</span>
                             </td>
-                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{v.emissor_nome}</td>
+                            <td style={{ padding: '16px', fontSize: '14px', color: '#334155' }}>{String(v.emissor_nome)}</td>
                           </tr>
                         ))}
-                        {historyQuery.data?.length === 0 && (
+                        {/* Mensagem caso o período selecionado não tenha nenhum brinde */}
+                        {filteredHistory.length === 0 && (
                           <tr>
-                            <td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Nenhum brinde foi emitido até o momento. Faça o seu primeiro teste!</td>
+                            <td colSpan={5} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Nenhum brinde foi emitido no período selecionado.</td>
                           </tr>
                         )}
                       </tbody>
