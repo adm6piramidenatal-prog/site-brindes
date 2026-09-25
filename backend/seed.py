@@ -5,7 +5,6 @@ from passlib.hash import pbkdf2_sha256
 
 from lib.db import client, db, ensure_indexes
 
-# Adicione ou remova funcionários desta lista quando quiser
 USERS_TO_CREATE = [
     {
         "name": "Eduardo Araújo",
@@ -27,34 +26,35 @@ USERS_TO_CREATE = [
     }
 ]
 
-
 async def seed() -> None:
     await ensure_indexes()
     
-    # Este ciclo vai criar ou atualizar todas as contas da lista acima
     for user_data in USERS_TO_CREATE:
         email = user_data["email"]
-        plain_password = user_data.pop("password_plain") # Separa a senha para a criptografar
+        plain_password = user_data.pop("password_plain")
         
         existing = await db.users.find_one({"email": email})
+        
+        # AQUI ESTÁ A CORREÇÃO: Garante que todos têm um ID único para o login funcionar
+        user_id = existing.get("id") if existing and "id" in existing else str(uuid.uuid4())
+        
         values = {
+            "id": user_id,
             **user_data,
             "password_hash": pbkdf2_sha256.hash(plain_password),
         }
         
         if existing:
             await db.users.update_one({"email": email}, {"$set": values})
-            print(f"Conta atualizada: {email}")
+            print(f"Conta atualizada e corrigida: {email}")
         else:
-            await db.users.insert_one({"id": str(uuid.uuid4()), **values})
+            await db.users.insert_one(values)
             print(f"Nova conta criada: {email}")
             
-    # Limpeza de segurança: apaga a conta de demonstração antiga
+    # Limpeza
     await db.users.delete_one({"email": "admin@resortbrindes.com.br"})
-    print("Conta de demonstração apagada por segurança.")
     
     client.close()
-
 
 if __name__ == "__main__":
     asyncio.run(seed())
