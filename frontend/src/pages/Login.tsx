@@ -56,7 +56,7 @@ export default function Login() {
         >
           <p className="section-kicker" data-testid="login-form-kicker">Área do emissor</p>
           <h2 data-testid="login-form-title">Bem-vindo de volta</h2>
-          <p className="login-help" data-testid="login-form-description">Use a conta de demonstração abaixo para acessar o gerador.</p>
+          <p className="login-help" data-testid="login-form-description">Insira os seus dados de acesso para entrar no sistema.</p>
 
           <div className="field-group">
             <Label htmlFor="login-email" data-testid="login-email-label">E-mail</Label>
@@ -70,10 +70,6 @@ export default function Login() {
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
-          </div>
-          <div className="demo-credentials" data-testid="demo-credentials">
-            <strong>/strong>
-            <span>/span>
           </div>
           <Button type="submit" className="primary-action" disabled={loginMutation.isPending} data-testid="login-submit-button">
             {loginMutation.isPending ? "Entrando..." : "Entrar no sistema"}<ArrowRight size={17} />
