@@ -13,8 +13,8 @@ import { beginSession } from "@/lib/session";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@resortbrindes.com.br");
-  const [password, setPassword] = useState("senha123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const loginMutation = useMutation({
@@ -72,8 +72,8 @@ export default function Login() {
             </div>
           </div>
           <div className="demo-credentials" data-testid="demo-credentials">
-            <strong>Conta de demonstração</strong>
-            <span>admin@resortbrindes.com.br · senha123</span>
+            <strong>/strong>
+            <span>/span>
           </div>
           <Button type="submit" className="primary-action" disabled={loginMutation.isPending} data-testid="login-submit-button">
             {loginMutation.isPending ? "Entrando..." : "Entrar no sistema"}<ArrowRight size={17} />
