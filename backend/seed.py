@@ -7,28 +7,34 @@ from lib.db import client, db, ensure_indexes
 
 USERS_TO_CREATE = [
     {
-        "name": "Eduardo Araújo",
+        "name": "Eduardo Vicente",
         "email": "adm6piramidenatal@gmail.com",
         "role": "admin",
         "password_plain": "091427"
     },
     {
-        "name": "Luismar",
+        "name": "Luismar - Gerente adm",
         "email": "funcionario@email.com",
         "role": "emissor",
         "password_plain": "senha_temporaria_123"
     },
     {
-        "name": "Gabriella S.",
+        "name": "Gabriella - Administrativo",
         "email": "gabriellasantosmb@gmail.com",
         "role": "emissor",
         "password_plain": "senhatemporaria123"
     },
     {
-        "name": "Kadydja C.",
+        "name": "Kadydja - Administrativo",
         "email": "adm10fiveinter@gmail.com",
         "role": "emissor",
         "password_plain": "senhatemporaria123"
+    },
+    {
+        "name": "Adauto - Recepção",
+        "email": "recepcao1piramidenatal@gmail.com",
+        "role": "emissor",
+        "password_plain": "recepcao123"
     },
 ]
 
