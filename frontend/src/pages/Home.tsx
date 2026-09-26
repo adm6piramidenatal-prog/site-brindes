@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Eye, FileCheck2, Gift, LayoutTemplate, LogOut, Printer, History, Ticket, Filter } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -217,35 +217,10 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer com o Botão Flutuante Nativo de Recepção */}
+      {/* Footer */}
       <footer className="site-footer no-print border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-500">
         FIVE Intermediadora de Vendas
       </footer>
-
-      {/* Botão Flutuante de Acesso à Ficha de Recepção */}
-      <Link 
-        to="/recepcao" 
-        className="no-print"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          backgroundColor: '#0f172a',
-          color: 'white',
-          padding: '14px 24px',
-          borderRadius: '50px',
-          textDecoration: 'none',
-          fontWeight: 'bold',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          zIndex: 9999,
-          fontSize: '14px'
-        }}
-      >
-        📋 Ficha de Recepção
-      </Link>
     </div>
   );
 }
