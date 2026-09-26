@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
@@ -10,22 +9,11 @@ import VoucherPreview from "@/components/VoucherPreview";
 import { Button } from "@/components/ui/button";
 import { fetchCurrentUser } from "@/lib/auth";
 import { endSession } from "@/lib/session";
-import { FALLBACK_CONFIG, fetchVoucherConfig, fetchVoucherHistory } from "@/lib/vouchers";
+import { fetchVoucherHistory } from "@/lib/vouchers";
 
 export default function Home() {
   const navigate = useNavigate();
   const userQuery = useQuery({ queryKey: ["auth", "me"], queryFn: fetchCurrentUser, retry: false });
-  const configQuery = useQuery({ queryKey: ["voucher-config"], queryFn: fetchVoucherConfig, retry: false });
-  const config = configQuery.data ?? FALLBACK_CONFIG;
-  
-  const [selectedGiftId, setSelectedGiftId] = useState(FALLBACK_CONFIG.gift_options[0].id);
-  const [winnerName, setWinnerName] = useState("");
-  const [winnerEmail, setWinnerEmail] = useState("");
-  const [winnerPhone, setWinnerPhone] = useState("");
-  const [consultantName, setConsultantName] = useState("");
-  const [closerName, setCloserName] = useState("");
-  const [emitterName, setEmitterName] = useState("");
-  const [customVoucherCode, setCustomVoucherCode] = useState("");
   const [activeTab, setActiveTab] = useState<"emitir" | "historico">("emitir");
 
   const historyQuery = useQuery({
@@ -52,7 +40,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Navigation Tabs com o Botão de Recepção Destacado */}
+      {/* Navigation Tabs */}
       <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print items-center">
         <Link
           to="/recepcao"
@@ -60,7 +48,7 @@ export default function Home() {
         >
           <FileText size={16} /> Ficha de Recepção
         </Link>
-        
+
         <div className="h-6 w-px bg-slate-200 mx-1" />
 
         <button
@@ -86,41 +74,10 @@ export default function Home() {
         {activeTab === "emitir" ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-5 no-print">
-              <GiftFormPanel
-                gifts={config.gift_options}
-                config={config}
-                selectedGiftId={selectedGiftId}
-                onSelectGift={setSelectedGiftId}
-                onGiftChange={setSelectedGiftId}
-                winnerName={winnerName}
-                setWinnerName={setWinnerName}
-                winnerEmail={winnerEmail}
-                setWinnerEmail={setWinnerEmail}
-                winnerPhone={winnerPhone}
-                setWinnerPhone={setWinnerPhone}
-                consultantName={consultantName}
-                setConsultantName={setConsultantName}
-                closerName={closerName}
-                setCloserName={setCloserName}
-                emitterName={emitterName}
-                setEmitterName={setEmitterName}
-                onGenerate={(codeData: any) => setCustomVoucherCode(codeData.code)}
-                isGenerating={false}
-              />
+              <GiftFormPanel />
             </div>
             <div className="lg:col-span-7 flex justify-center sticky top-6">
-              <VoucherPreview
-                gift={config.gift_options.find(g => g.id === selectedGiftId)}
-                config={config}
-                selectedGiftId={selectedGiftId}
-                winnerName={winnerName}
-                consultantName={consultantName}
-                closerName={closerName}
-                emitterName={emitterName}
-                voucherCode={customVoucherCode}
-                issueDate={new Date().toISOString()}
-                observation=""
-              />
+              <VoucherPreview />
             </div>
           </div>
         ) : (
