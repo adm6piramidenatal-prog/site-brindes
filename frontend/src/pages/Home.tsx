@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Eye, FileCheck2, Gift, LayoutTemplate, LogOut, Printer, History, Ticket, Filter } from "lucide-react";
-import { toast, Toaster } from "sonner";
+import { Gift, History, LogOut } from "lucide-react";
+import { Toaster } from "sonner";
 
 import GiftFormPanel from "@/components/GiftFormPanel";
 import VoucherPreview from "@/components/VoucherPreview";
 import { Button } from "@/components/ui/button";
 import { fetchCurrentUser } from "@/lib/auth";
 import { endSession } from "@/lib/session";
-import { createVoucherCode, FALLBACK_CONFIG, fetchVoucherConfig, fetchVoucherHistory } from "@/lib/vouchers";
+import { FALLBACK_CONFIG, fetchVoucherConfig, fetchVoucherHistory } from "@/lib/vouchers";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -25,61 +25,12 @@ export default function Home() {
   const [emitterName, setEmitterName] = useState("");
   const [customVoucherCode, setCustomVoucherCode] = useState("");
   const [activeTab, setActiveTab] = useState<"emitir" | "historico">("emitir");
-  const [historySearch, setHistorySearch] = useState("");
-  const [historyDateFilter, setHistoryDateFilter] = useState<"all" | "today" | "week" | "month">("all");
 
   const historyQuery = useQuery({
     queryKey: ["voucher-history"],
     queryFn: fetchVoucherHistory,
     refetchInterval: 10000,
   });
-
-  const createMutation = useMutation({
-    mutationFn: createVoucherCode,
-    onSuccess: (data) => {
-      toast.success("Voucher gerado com sucesso!");
-      setCustomVoucherCode(data.code);
-      historyQuery.refetch();
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || "Erro ao gerar voucher");
-    },
-  });
-
-  const handleGenerate = () => {
-    if (!winnerName.trim()) {
-      toast.error("Preencha o nome do cliente.");
-      return;
-    }
-    createMutation.mutate({
-      gift_id: selectedGiftId,
-      winner_name: winnerName,
-      winner_email: winnerEmail || undefined,
-      winner_phone: winnerPhone || undefined,
-      consultant_name: consultantName || undefined,
-      closer_name: closerName || undefined,
-      emitter_name: emitterName || undefined,
-    });
-  };
-
-  const filteredHistory = useMemo(() => {
-    const list = historyQuery.data ?? [];
-    return list.filter((v) => {
-      const matchText = `${v.winner_name} ${v.code} ${v.consultant_name ?? ""} ${v.closer_name ?? ""}`.toLowerCase();
-      const matchesSearch = matchText.includes(historySearch.toLowerCase());
-      if (!matchesSearch) return false;
-
-      if (historyDateFilter === "all") return true;
-      const createdDate = new Date(v.created_at);
-      const now = new Date();
-      const diffDays = (now.getTime() - createdDate.getTime()) / (1000 * 3600 * 24);
-
-      if (historyDateFilter === "today") return diffDays <= 1;
-      if (historyDateFilter === "week") return diffDays <= 7;
-      if (historyDateFilter === "month") return diffDays <= 30;
-      return true;
-    });
-  }, [historyQuery.data, historySearch, historyDateFilter]);
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
@@ -140,8 +91,8 @@ export default function Home() {
                 setCloserName={setCloserName}
                 emitterName={emitterName}
                 setEmitterName={setEmitterName}
-                onGenerate={handleGenerate}
-                isGenerating={createMutation.isPending}
+                onGenerate={(data) => setCustomVoucherCode(data.code)}
+                isGenerating={false}
               />
             </div>
             <div className="lg:col-span-7 flex justify-center sticky top-6">
@@ -158,29 +109,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 no-print">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-              <h2 className="text-lg font-bold text-slate-800">Histórico de Emissões</h2>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Pesquisar por nome, código..."
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  className="px-3 py-2 border rounded-lg text-sm w-full sm:w-64"
-                />
-                <select
-                  value={historyDateFilter}
-                  onChange={(e: any) => setHistoryDateFilter(e.target.value)}
-                  className="px-3 py-2 border rounded-lg text-sm bg-white"
-                >
-                  <option value="all">Todos</option>
-                  <option value="today">Hoje</option>
-                  <option value="week">Esta Semana</option>
-                  <option value="month">Este Mês</option>
-                </select>
-              </div>
-            </div>
-
+            <h2 className="text-lg font-bold text-slate-800 mb-4">Histórico de Emissões</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
@@ -188,25 +117,19 @@ export default function Home() {
                     <th className="p-3">Data</th>
                     <th className="p-3">Código</th>
                     <th className="p-3">Cliente</th>
-                    <th className="p-3">Consultor</th>
-                    <th className="p-3">Fechador</th>
-                    <th className="p-3">Brinde</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredHistory.length === 0 ? (
+                  {(historyQuery.data ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-6 text-center text-slate-400">Nenhum voucher encontrado.</td>
+                      <td colSpan={3} className="p-6 text-center text-slate-400">Nenhum voucher encontrado.</td>
                     </tr>
                   ) : (
-                    filteredHistory.map((v) => (
-                      <tr key={v.id} className="border-b hover:bg-slate-50 transition-colors">
-                        <td className="p-3 text-slate-600">{new Date(v.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</td>
+                    (historyQuery.data ?? []).map((v: any) => (
+                      <tr key={v.id} className="border-b hover:bg-slate-50">
+                        <td className="p-3 text-slate-600">{new Date(v.created_at).toLocaleString("pt-BR")}</td>
                         <td className="p-3 font-mono font-bold text-slate-900">{v.code}</td>
                         <td className="p-3 font-semibold text-slate-800">{v.winner_name}</td>
-                        <td className="p-3 text-slate-600">{v.consultant_name || "-"}</td>
-                        <td className="p-3 text-slate-600">{v.closer_name || "-"}</td>
-                        <td className="p-3 text-slate-600">{v.gift_title || "-"}</td>
                       </tr>
                     ))
                   )}
@@ -217,7 +140,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="site-footer no-print border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-500">
         FIVE Intermediadora de Vendas
       </footer>
