@@ -36,31 +36,28 @@ export default function Home() {
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
       <Toaster richColors position="top-right" />
       
-      {/* Header */}
+      {/* Header com o Botão de Ficha de Recepção Integrado em Destaque */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center no-print">
         <div className="flex items-center gap-3">
           <img src="/brand/five-logo.webp" alt="FIVE" className="h-8 object-contain" />
           <span className="text-sm font-semibold text-slate-500 border-l pl-3 border-slate-300">Sistema de Vouchers</span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-slate-700">Olá, {userQuery.data?.name || "Atendente"}</span>
+          <Link
+            to="/recepcao"
+            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+          >
+            <FileText size={14} /> Ficha de Recepção
+          </Link>
+          <span className="text-sm font-medium text-slate-700 border-l pl-4 border-slate-200">Olá, {userQuery.data?.name || "Atendente"}</span>
           <Button variant="outline" size="sm" onClick={() => endSession().then(() => navigate("/login"))} className="gap-2">
             <LogOut size={16} /> Sair
           </Button>
         </div>
       </header>
 
-      {/* Navigation Tabs com o Botão de Recepção Destacado */}
-      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print items-center">
-        <Link
-          to="/recepcao"
-          className="py-2 px-4 font-bold text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors my-2 shadow-sm"
-        >
-          <FileText size={16} /> Ficha de Recepção
-        </Link>
-
-        <div className="h-6 w-px bg-slate-200 mx-1" />
-
+      {/* Navigation Tabs originais */}
+      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print">
         <button
           onClick={() => setActiveTab("emitir")}
           className={`py-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition-colors ${
