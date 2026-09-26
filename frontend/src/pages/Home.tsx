@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { Gift, History, LogOut } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Gift, History, LogOut, FileText } from "lucide-react";
 import { Toaster } from "sonner";
 
 import GiftFormPanel from "@/components/GiftFormPanel";
@@ -50,15 +50,24 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print">
+      {/* Navigation Tabs (Com o botão de Recepção integrado em primeiro lugar) */}
+      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print items-center">
+        <Link
+          to="/recepcao"
+          className="py-3 px-4 font-bold text-sm text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-2 transition-colors border border-slate-300 my-2"
+        >
+          <FileText size={16} className="text-slate-700" /> Ficha de Recepção
+        </Link>
+
+        <div className="h-6 w-px bg-slate-200 mx-2" />
+
         <button
           onClick={() => setActiveTab("emitir")}
           className={`py-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition-colors ${
             activeTab === "emitir" ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-900"
           }`}
         >
-          <Gift size={16} /> Emitir Voucher
+          <Gift size={16} /> Emitir Brinde
         </button>
         <button
           onClick={() => setActiveTab("historico")}
