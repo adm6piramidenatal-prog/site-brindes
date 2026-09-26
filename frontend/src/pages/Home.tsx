@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { Gift, History, LogOut } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Gift, History, LogOut, FileText } from "lucide-react";
 import { Toaster } from "sonner";
 
 import GiftFormPanel from "@/components/GiftFormPanel";
@@ -50,8 +50,17 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print">
+      {/* Navigation Tabs com o Botão de Recepção Destacado */}
+      <div className="bg-white border-b border-slate-200 px-6 flex gap-4 no-print items-center">
+        <Link
+          to="/recepcao"
+          className="py-2 px-4 font-bold text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg flex items-center gap-2 transition-colors my-2 shadow-sm"
+        >
+          <FileText size={16} /> Ficha de Recepção
+        </Link>
+
+        <div className="h-6 w-px bg-slate-200 mx-1" />
+
         <button
           onClick={() => setActiveTab("emitir")}
           className={`py-3 px-4 font-semibold text-sm border-b-2 flex items-center gap-2 transition-colors ${
@@ -75,7 +84,9 @@ export default function Home() {
         {activeTab === "emitir" ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-5 no-print">
+              {/* @ts-ignore */}
               <GiftFormPanel
+                config={config}
                 selectedGiftId={selectedGiftId}
                 onSelectGift={setSelectedGiftId}
                 winnerName={winnerName}
@@ -95,6 +106,7 @@ export default function Home() {
               />
             </div>
             <div className="lg:col-span-7 flex justify-center sticky top-6">
+              {/* @ts-ignore */}
               <VoucherPreview
                 config={config}
                 selectedGiftId={selectedGiftId}
