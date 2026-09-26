@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Eye, FileCheck2, Gift, LayoutTemplate, LogOut, Printer, History, Ticket, Filter } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -381,6 +381,33 @@ export default function Home() {
         )}
       </main>
       <footer className="site-footer no-print" data-testid="site-footer"><span>FIVE Intermediadora de Vendas</span><span>Emissão interna de brindes</span></footer>
+    
+        {/* Botão Flutuante para a Recepção */}
+        <Link 
+          to="/recepcao" 
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#0f172a',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: '50px',
+            textDecoration: 'none',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            zIndex: 9999
+          }}
+        >
+          📋 Ficha de Recepção
+        </Link>
+        
+      </div>
+    )
+}
     </div>
   );
 }
